@@ -128,16 +128,34 @@ class WeatherApp:
     def format_earthquake_data(self, data):
         if not data:
             return "無法獲取地震資料"
-            
+        records = data.get('records', {})
+        eq_list = records.get('Earthquake')
+        if not eq_list or len(eq_list) == 0:
+            return "目前查無地震資料。"
         result = []
-        for earthquake in data['records']['earthquake']:
-            result.append(f"地震時間: {earthquake['reportContent']}")
-            result.append(f"震央位置: {earthquake['epicenter']['location']}")
-            result.append(f"地震規模: {earthquake['magnitude']['magnitudeValue']}")
-            result.append(f"地震深度: {earthquake['depth']['value']} 公里")
-            result.append(f"最大震度: {earthquake['intensity']['shakingArea'][0]['areaName']} {earthquake['intensity']['shakingArea'][0]['areaIntensity']}")
-            result.append("-" * 50)
-            
+        for eq in eq_list:
+            info = eq.get('EarthquakeInfo', {})
+            intensity = eq.get('Intensity', {})
+            shaking_areas = intensity.get('ShakingArea', [])
+            # 取最大震度
+            max_area = None
+            max_intensity = ""
+            for area in shaking_areas:
+                ai = area.get('AreaIntensity', '')
+                if not max_intensity or ai > max_intensity:
+                    max_intensity = ai
+                    max_area = area
+            # 條列顯示
+            result.append(f"地震時間：{info.get('OriginTime', '-')}")
+            result.append(f"震央位置：{info.get('Epicenter', {}).get('Location', '-')}")
+            result.append(f"地震規模：{info.get('EarthquakeMagnitude', {}).get('MagnitudeValue', '-')}")
+            result.append(f"地震深度：{info.get('FocalDepth', '-')} 公里")
+            if max_area:
+                result.append(f"最大震度：{max_area.get('CountyName', '-')}，{max_area.get('AreaIntensity', '-')}")
+            else:
+                result.append("最大震度：-")
+            result.append(f"簡要描述：{eq.get('ReportContent', '-')}")
+            result.append("-" * 40)
         return "\n".join(result)
         
     def get_weather(self):
