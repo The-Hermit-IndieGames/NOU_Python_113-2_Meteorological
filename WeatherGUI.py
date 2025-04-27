@@ -101,6 +101,45 @@ class WeatherApp:
                 if districts:
                     self.district_combo.current(0)
         
+    def format_weather_data(self, data):
+        if not data:
+            return "無法獲取天氣資料"
+            
+        result = []
+        result.append(f"城市: {data['city']}")
+        result.append(f"行政區: {data['district']}")
+        result.append("\n天氣預報:")
+        
+        for weather in data['weather']:
+            element_type = weather['elementType']
+            result.append(f"\n{element_type}:")
+            
+            for value in weather['elementValue']:
+                date = value['date']
+                period = value['period']
+                values = value['values']
+                
+                result.append(f"\n日期: {date} ({period})")
+                for key, val in values.items():
+                    result.append(f"  {key}: {val}")
+                    
+        return "\n".join(result)
+        
+    def format_earthquake_data(self, data):
+        if not data:
+            return "無法獲取地震資料"
+            
+        result = []
+        for earthquake in data['records']['earthquake']:
+            result.append(f"地震時間: {earthquake['reportContent']}")
+            result.append(f"震央位置: {earthquake['epicenter']['location']}")
+            result.append(f"地震規模: {earthquake['magnitude']['magnitudeValue']}")
+            result.append(f"地震深度: {earthquake['depth']['value']} 公里")
+            result.append(f"最大震度: {earthquake['intensity']['shakingArea'][0]['areaName']} {earthquake['intensity']['shakingArea'][0]['areaIntensity']}")
+            result.append("-" * 50)
+            
+        return "\n".join(result)
+        
     def get_weather(self):
         city = self.city_var.get()
         district = self.district_var.get()
@@ -112,8 +151,9 @@ class WeatherApp:
             
         result = get_weather_by_loction(city, district, [element])
         if result:
+            formatted_data = self.format_weather_data(result)
             self.weather_result.delete(1.0, tk.END)
-            self.weather_result.insert(tk.END, json.dumps(result, indent=2, ensure_ascii=False))
+            self.weather_result.insert(tk.END, formatted_data)
         else:
             messagebox.showerror("錯誤", "無法獲取天氣資料")
             
@@ -122,9 +162,9 @@ class WeatherApp:
         
         result = self.api.getEarthquake(mode_type)
         if result['status']:
-            earthquake_data = result['data']
+            formatted_data = self.format_earthquake_data(result['data'])
             self.earthquake_result.delete(1.0, tk.END)
-            self.earthquake_result.insert(tk.END, json.dumps(earthquake_data, indent=2, ensure_ascii=False))
+            self.earthquake_result.insert(tk.END, formatted_data)
         else:
             messagebox.showerror("錯誤", result['message'])
 
