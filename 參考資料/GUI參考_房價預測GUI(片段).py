@@ -552,9 +552,9 @@ tree.pack(fill="both", expand=True, padx=10, pady=10)
 # 建立 matplotlib 圖表
 fig, ax = plt.subplots()
 ax.plot([1, 2, 3, 4, 5], [2, 3, 5, 7, 11], marker='o')
-ax.set_title("簡單折線圖")
-ax.set_xlabel("X 軸")
-ax.set_ylabel("Y 軸")
+ax.set_title("matplotlib")
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
 
 # 將 matplotlib 圖表嵌入到 customtkinter
 canvas = FigureCanvasTkAgg(fig, master=scrollable_frame)
