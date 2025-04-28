@@ -2,7 +2,10 @@
 # libraries Import
 from functools import partial
 from tkinter import *
+from tkinter import ttk  # 需要額外引入 Treeview
 import customtkinter
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 ##########################################################################################################################
 ###                                                                                                                    ###
@@ -529,6 +532,35 @@ Output_label = customtkinter.CTkLabel(
     fg_color="transparent",
     )
 Output_label.pack(pady=20, anchor="center")
+
+# 表格、作圖 ======================================================================= 位置
+
+# 建立 Treeview 表格
+tree = ttk.Treeview(scrollable_frame, columns=("Name", "Age", "City"), show="headings")
+tree.heading("Name", text="姓名")
+tree.heading("Age", text="年齡")
+tree.heading("City", text="城市")
+
+# 插入一些資料
+tree.insert("", "end", values=("小明", 25, "台北"))
+tree.insert("", "end", values=("小華", 30, "新北"))
+tree.insert("", "end", values=("小美", 28, "台中"))
+
+tree.pack(fill="both", expand=True, padx=10, pady=10)
+
+
+# 建立 matplotlib 圖表
+fig, ax = plt.subplots()
+ax.plot([1, 2, 3, 4, 5], [2, 3, 5, 7, 11], marker='o')
+ax.set_title("簡單折線圖")
+ax.set_xlabel("X 軸")
+ax.set_ylabel("Y 軸")
+
+# 將 matplotlib 圖表嵌入到 customtkinter
+canvas = FigureCanvasTkAgg(fig, master=scrollable_frame)
+canvas.draw()
+canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
 
 #run the main loop
 window.mainloop()
