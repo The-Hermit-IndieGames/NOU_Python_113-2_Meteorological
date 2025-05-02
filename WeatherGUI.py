@@ -260,15 +260,15 @@ class WeatherApp:
                 weather['wind_scale'],
                 weather['wind_direction']
             ]
-
-            bg_color = "#F5F5F5" if row_idx % 2 == 0 else "#FFFFFF"
+            #自動填入預色顏色
+            #bg_color = "#F5F5F5" if row_idx % 2 == 0 else "#FFFFFF"
 
             for col_idx, value in enumerate(values):
                 label = ctk.CTkLabel(
                     self.weather_table_frame,
                     text=value,
                     font=ctk.CTkFont(size=12),
-                    fg_color=bg_color,
+                    #fg_color=bg_color,
                     corner_radius=6
                 )
                 label.grid(row=row_idx, column=col_idx, padx=2, pady=2, sticky="nsew")
