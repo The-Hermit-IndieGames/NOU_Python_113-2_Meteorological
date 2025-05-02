@@ -1,5 +1,5 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
+import customtkinter as ctk
+from tkinter import messagebox
 import json
 from RequestApi import RequestApi
 from app import get_weather_by_loction
@@ -8,86 +8,232 @@ class WeatherApp:
     def __init__(self, root):
         self.root = root
         self.root.title("氣象預報系統")
-        self.root.geometry("800x600")
+        self.root.geometry("1000x700") 
+        
+        # 設置主題
+        self.theme_var = ctk.StringVar(value="blue")
+        ctk.set_appearance_mode("system")
+        ctk.set_default_color_theme(self.theme_var.get())
         
         # 初始化 API
         self.api = RequestApi()
         
-        # 創建主框架
-        self.main_frame = ttk.Frame(self.root, padding="10")
-        self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        # 主框架
+        self.main_frame = ctk.CTkFrame(self.root, fg_color="transparent")
+        self.main_frame.pack(fill="both", expand=True, padx=20, pady=20)
         
-        # 創建標籤頁
-        self.notebook = ttk.Notebook(self.main_frame)
-        self.notebook.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        # 標題
+        self.title_label = ctk.CTkLabel(
+            self.main_frame,
+            text="氣象預報系統",
+            font=ctk.CTkFont(size=24, weight="bold")
+        )
+        self.title_label.pack(pady=(0, 20))
         
-        # 天氣預報頁面
-        self.weather_frame = ttk.Frame(self.notebook, padding="10")
-        self.notebook.add(self.weather_frame, text="天氣預報")
+        # 右上角外觀模式下拉選單
+        self.appearance_mode = ctk.CTkOptionMenu(
+            self.root,
+            values=["system", "light", "dark"],
+            command=self.change_appearance_mode,
+            font=ctk.CTkFont(size=12),
+            width=100,
+            anchor="center",
+            dynamic_resizing=False
+        )
+        self.appearance_mode.place(relx=0.97, rely=0.03, anchor="ne")
+        self.appearance_mode.set(ctk.get_appearance_mode())
         
-        # 地震資訊頁面
-        self.earthquake_frame = ttk.Frame(self.notebook, padding="10")
-        self.notebook.add(self.earthquake_frame, text="地震資訊")
+        # 標籤頁
+        self.tabview = ctk.CTkTabview(self.main_frame, fg_color="transparent")
+        self.tabview.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # 天氣預報頁
+        self.weather_frame = self.tabview.add("天氣預報")
+        
+        # 地震資訊頁
+        self.earthquake_frame = self.tabview.add("地震資訊")
         
         self.setup_weather_page()
         self.setup_earthquake_page()
         
     def setup_weather_page(self):
+        # 內容主框架
+        content_frame = ctk.CTkFrame(self.weather_frame, fg_color="transparent")
+        content_frame.pack(fill="both", expand=True, padx=0, pady=0)
+        
+        # 左側控制面板
+        control_frame = ctk.CTkFrame(content_frame, fg_color="transparent", width=260)
+        control_frame.pack(side="left", fill="y", padx=(0, 0), pady=0)
+        
         # 城市選擇
-        ttk.Label(self.weather_frame, text="選擇城市:").grid(row=0, column=0, padx=5, pady=5)
-        self.city_var = tk.StringVar()
-        self.city_combo = ttk.Combobox(self.weather_frame, textvariable=self.city_var)
-        self.city_combo['values'] = list(self.api.cityApi.keys())
-        self.city_combo.grid(row=0, column=1, padx=5, pady=5)
-        self.city_combo.current(0)
+        ctk.CTkLabel(
+            control_frame,
+            text="",
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).pack(pady=(10, 15))
+        
+        city_names = list(self.api.cityApi.keys())
+        self.city_var = ctk.StringVar()
+        self.city_combo = ctk.CTkComboBox(
+            control_frame,
+            values=city_names,
+            variable=self.city_var,
+            width=200,
+            height=35,
+            font=ctk.CTkFont(size=13),
+            command=self.update_districts
+        )
+        self.city_combo.pack(pady=5)
+        self.city_combo.set(city_names[0])
         
         # 行政區選擇
-        ttk.Label(self.weather_frame, text="選擇行政區:").grid(row=1, column=0, padx=5, pady=5)
-        self.district_var = tk.StringVar()
-        self.district_combo = ttk.Combobox(self.weather_frame, textvariable=self.district_var)
-        self.district_combo.grid(row=1, column=1, padx=5, pady=5)
+        ctk.CTkLabel(
+            control_frame,
+            text="",
+            font=ctk.CTkFont(size=14, weight="bold")
+        )
+        
+        self.district_var = ctk.StringVar()
+        self.district_combo = ctk.CTkComboBox(
+            control_frame,
+            variable=self.district_var,
+            width=200,
+            height=35,
+            font=ctk.CTkFont(size=13)
+        )
+        self.district_combo.pack(pady=5)
         
         # 天氣元素選擇
-        ttk.Label(self.weather_frame, text="選擇天氣元素:").grid(row=2, column=0, padx=5, pady=5)
-        self.elements_var = tk.StringVar(value="天氣預報綜合描述")
-        self.elements_combo = ttk.Combobox(self.weather_frame, textvariable=self.elements_var)
-        self.elements_combo['values'] = [
-            "天氣預報綜合描述",
-            "平均溫度",
-            "最高溫度",
-            "最低溫度",
-            "平均相對濕度",
-            "天氣現象",
-            "紫外線指數",
-            "最高體感溫度",
-            "降雨機率",
-            "風向"
-        ]
-        self.elements_combo.grid(row=2, column=1, padx=5, pady=5)
+        ctk.CTkLabel(
+            control_frame,
+            text="",
+            font=ctk.CTkFont(size=14, weight="bold")
+        )
+        
+        self.elements_var = ctk.StringVar(value="天氣預報綜合描述")
+        self.elements_combo = ctk.CTkComboBox(
+            control_frame,
+            values=[
+                "天氣預報綜合描述",
+                "平均溫度",
+                "最高溫度",
+                "最低溫度",
+                "平均相對濕度",
+                "天氣現象",
+                "紫外線指數",
+                "最高體感溫度",
+                "降雨機率",
+                "風向"
+            ],
+            variable=self.elements_var,
+            width=200,
+            height=35,
+            font=ctk.CTkFont(size=13)
+        )
+        self.elements_combo.pack(pady=5)
         
         # 查詢按鈕
-        ttk.Button(self.weather_frame, text="查詢天氣", command=self.get_weather).grid(row=3, column=0, columnspan=2, pady=10)
+        self.query_button = ctk.CTkButton(
+            control_frame,
+            text="查詢",
+            command=self.get_weather,
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#1f538d",
+            hover_color="#14375e"
+        )
+        self.query_button.pack(pady=20)
         
-        # 結果顯示區域
-        self.weather_result = tk.Text(self.weather_frame, height=20, width=80)
-        self.weather_result.grid(row=4, column=0, columnspan=2, pady=10)
+        # 右側結果顯示區域
+        result_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        result_frame.pack(side="left", fill="both", expand=True, padx=(20, 0), pady=0)
         
-        # 綁定城市選擇事件
-        self.city_combo.bind('<<ComboboxSelected>>', self.update_districts)
+        # 查詢結果
+        ctk.CTkLabel(
+            result_frame,
+            text="",
+            font=ctk.CTkFont(size=16, weight="bold")
+        ).pack(pady=10)
+        
+        # 查詢結果顯示區域
+        self.weather_result = ctk.CTkTextbox(
+            result_frame,
+            font=ctk.CTkFont(size=13),
+            wrap="word"
+        )
+        self.weather_result.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # 初始化行政區
+        self.update_districts()
         
     def setup_earthquake_page(self):
+        # 內容主框架
+        content_frame = ctk.CTkFrame(self.earthquake_frame, fg_color="transparent")
+        content_frame.pack(fill="both", expand=True, padx=0, pady=0)
+        
+        # 左側控制面板
+        control_frame = ctk.CTkFrame(content_frame, fg_color="transparent", width=260)
+        control_frame.pack(side="left", fill="y", padx=(0, 0), pady=0)
+        
         # 地震類型選擇
-        ttk.Label(self.earthquake_frame, text="地震類型:").grid(row=0, column=0, padx=5, pady=5)
-        self.earthquake_type = tk.StringVar(value="0")
-        ttk.Radiobutton(self.earthquake_frame, text="小區域有感地震", variable=self.earthquake_type, value="0").grid(row=0, column=1, padx=5, pady=5)
-        ttk.Radiobutton(self.earthquake_frame, text="顯著有感地震", variable=self.earthquake_type, value="1").grid(row=0, column=2, padx=5, pady=5)
+        ctk.CTkLabel(
+            control_frame,
+            text="地震類型:",
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).pack(pady=(10, 5))
+        
+        self.earthquake_type = ctk.StringVar(value="0")
+        self.earthquake_frame_radio = ctk.CTkFrame(control_frame)
+        self.earthquake_frame_radio.pack(pady=5)
+        
+        ctk.CTkRadioButton(
+            self.earthquake_frame_radio,
+            text="小區域有感地震",
+            variable=self.earthquake_type,
+            value="0",
+            font=ctk.CTkFont(size=13)
+        ).pack(side="left", padx=10)
+        
+        ctk.CTkRadioButton(
+            self.earthquake_frame_radio,
+            text="顯著有感地震",
+            variable=self.earthquake_type,
+            value="1",
+            font=ctk.CTkFont(size=13)
+        ).pack(side="left", padx=10)
         
         # 查詢按鈕
-        ttk.Button(self.earthquake_frame, text="查詢地震", command=self.get_earthquake).grid(row=1, column=0, columnspan=3, pady=10)
+        self.query_button = ctk.CTkButton(
+            control_frame,
+            text="查詢",
+            command=self.get_earthquake,
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#1f538d",
+            hover_color="#14375e"
+        )
+        self.query_button.pack(pady=20)
+        
+        # 右側結果顯示區域
+        result_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        result_frame.pack(side="left", fill="both", expand=True, padx=(20, 0), pady=0)
+        
+        # 結果標題
+        ctk.CTkLabel(
+            result_frame,
+            text="",
+            font=ctk.CTkFont(size=16, weight="bold")
+        ).pack(pady=10)
         
         # 結果顯示區域
-        self.earthquake_result = tk.Text(self.earthquake_frame, height=20, width=80)
-        self.earthquake_result.grid(row=2, column=0, columnspan=3, pady=10)
+        self.earthquake_result = ctk.CTkTextbox(
+            result_frame,
+            font=ctk.CTkFont(size=13),
+            wrap="word"
+        )
+        self.earthquake_result.pack(fill="both", expand=True, padx=10, pady=10)
         
     def update_districts(self, event=None):
         city = self.city_var.get()
@@ -97,9 +243,9 @@ class WeatherApp:
             locations = data["records"]["Locations"]
             if locations:
                 districts = [loc["LocationName"] for loc in locations[0].get("Location", [])]
-                self.district_combo['values'] = districts
+                self.district_combo.configure(values=districts)
                 if districts:
-                    self.district_combo.current(0)
+                    self.district_combo.set(districts[0])
         
     def format_weather_data(self, data):
         if not data:
@@ -170,8 +316,8 @@ class WeatherApp:
         result = get_weather_by_loction(city, district, [element])
         if result:
             formatted_data = self.format_weather_data(result)
-            self.weather_result.delete(1.0, tk.END)
-            self.weather_result.insert(tk.END, formatted_data)
+            self.weather_result.delete(1.0, ctk.END)
+            self.weather_result.insert(ctk.END, formatted_data)
         else:
             messagebox.showerror("錯誤", "無法獲取天氣資料")
             
@@ -181,12 +327,17 @@ class WeatherApp:
         result = self.api.getEarthquake(mode_type)
         if result['status']:
             formatted_data = self.format_earthquake_data(result['data'])
-            self.earthquake_result.delete(1.0, tk.END)
-            self.earthquake_result.insert(tk.END, formatted_data)
+            self.earthquake_result.delete(1.0, ctk.END)
+            self.earthquake_result.insert(ctk.END, formatted_data)
         else:
             messagebox.showerror("錯誤", result['message'])
 
+    def change_appearance_mode(self, new_mode):
+        ctk.set_appearance_mode(new_mode)
+        self.root.update_idletasks()
+        self.root.update()
+
 if __name__ == "__main__":
-    root = tk.Tk()
+    root = ctk.CTk()
     app = WeatherApp(root)
     root.mainloop() 
