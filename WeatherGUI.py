@@ -103,35 +103,6 @@ class WeatherApp:
         )
         self.district_combo.pack(pady=5)
         
-        # 天氣元素選擇
-        ctk.CTkLabel(
-            control_frame,
-            text="",
-            font=ctk.CTkFont(size=14, weight="bold")
-        )
-        
-        self.elements_var = ctk.StringVar(value="天氣預報綜合描述")
-        self.elements_combo = ctk.CTkComboBox(
-            control_frame,
-            values=[
-                "天氣預報綜合描述",
-                "平均溫度",
-                "最高溫度",
-                "最低溫度",
-                "平均相對濕度",
-                "天氣現象",
-                "紫外線指數",
-                "最高體感溫度",
-                "降雨機率",
-                "風向"
-            ],
-            variable=self.elements_var,
-            width=200,
-            height=35,
-            font=ctk.CTkFont(size=13)
-        )
-        self.elements_combo.pack(pady=5)
-        
         # 查詢按鈕
         self.query_button = ctk.CTkButton(
             control_frame,
@@ -284,7 +255,7 @@ class WeatherApp:
                 weather['temperature'],
                 weather['feels_like'],
                 weather['humidity'],
-                weather['condition'],
+                weather['weather'],
                 weather['rain_chance'],
                 weather['wind_scale'],
                 weather['wind_direction']
@@ -380,7 +351,7 @@ class WeatherApp:
                         'temperature': '-',
                         'feels_like': '-',
                         'humidity': '-',
-                        'condition': '-',
+                        'weather': '-',
                         'rain_chance': '-',
                         'wind_scale': '-',
                         'wind_direction': '-'
@@ -393,6 +364,7 @@ class WeatherApp:
                         date = value.get('date', '')
                         period = value.get('period', '')
                         values = value.get('values', {})
+                        print(f"values: {values}")
                         
                         # 找到對應的時間點資料
                         target_data = next((x for x in weather_data if x['time'] == f"{date} {period}"), None)
@@ -403,17 +375,14 @@ class WeatherApp:
                                 target_data['feels_like'] = f"{values['FeelsLike']}°C" if values['FeelsLike'] != '-' else '-'
                             elif element_type == "相對濕度" and "Humidity" in values:
                                 target_data['humidity'] = f"{values['Humidity']}%" if values['Humidity'] != '-' else '-'
-                            elif element_type == "天氣現象" and "Condition" in values:
-                                target_data['condition'] = values['Condition']
+                            elif element_type == "天氣現象" and "Weather" in values:
+                                target_data['weather'] = values['Weather']
                             elif element_type == "降雨機率" and "RainChance" in values:
                                 target_data['rain_chance'] = f"{values['RainChance']}%" if values['RainChance'] != '-' else '-'
                             elif element_type == "風向" and "WindDirection" in values:
                                 target_data['wind_direction'] = values['WindDirection']
                             elif element_type == "蒲福風級" and "WindScale" in values:
                                 target_data['wind_scale'] = f"{values['WindScale']}級" if values['WindScale'] != '-' else '-'
-                
-                print("\n=== Processed Weather Data ===")
-                print(json.dumps(weather_data, indent=2, ensure_ascii=False))
                 
                 result = {'city': city, 'district': district, 'weather': weather_data}
                 self.format_weather_data(result)
