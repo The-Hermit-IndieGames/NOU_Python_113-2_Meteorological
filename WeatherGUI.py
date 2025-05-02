@@ -156,13 +156,9 @@ class WeatherApp:
             font=ctk.CTkFont(size=16, weight="bold")
         ).pack(pady=10)
         
-        # 查詢結果顯示區域
-        self.weather_result = ctk.CTkTextbox(
-            result_frame,
-            font=ctk.CTkFont(size=13),
-            wrap="word"
-        )
-        self.weather_result.pack(fill="both", expand=True, padx=10, pady=10)
+        # 結果表格框架
+        self.weather_table_frame = ctk.CTkFrame(result_frame)
+        self.weather_table_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
         # 初始化行政區
         self.update_districts()
@@ -248,28 +244,66 @@ class WeatherApp:
                     self.district_combo.set(districts[0])
         
     def format_weather_data(self, data):
+        for widget in self.weather_table_frame.winfo_children():
+            widget.destroy()
+
         if not data:
-            return "無法獲取天氣資料"
-            
-        result = []
-        result.append(f"城市: {data['city']}")
-        result.append(f"行政區: {data['district']}")
-        result.append("\n天氣預報:")
-        
-        for weather in data['weather']:
-            element_type = weather['elementType']
-            result.append(f"\n{element_type}:")
-            
-            for value in weather['elementValue']:
-                date = value['date']
-                period = value['period']
-                values = value['values']
+            label = ctk.CTkLabel(self.weather_table_frame, text="無法獲取天氣資料")
+            label.pack()
+            return
+
+        # 表格標題
+        headers = ["時間", "溫度", "體感溫度", "相對溼度", "天氣狀況", "降雨機率", "蒲福風級", "風向"]
+        for col, text in enumerate(headers):
+            label = ctk.CTkLabel(
+                self.weather_table_frame,
+                text=text,
+                font=ctk.CTkFont(size=12, weight="bold"),
+                fg_color="#2B5773", 
+                text_color="white", 
+                corner_radius=6
+            )
+            label.grid(row=0, column=col, padx=2, pady=2, sticky="nsew")
+            self.weather_table_frame.grid_columnconfigure(col, weight=1)
+
+        # 填入天氣資料
+        for row_idx, weather in enumerate(data['weather'], start=1):
+            # 從時間字串中提取日期和時段
+            time_parts = weather['time'].split(' ')
+            if len(time_parts) == 2:
+                date = time_parts[0]
+                period = time_parts[1]
+                # 只顯示月日
+                date = date[5:]  # 去掉年份和第一個橫槓
+                display_time = f"{date}\n{period}"
+            else:
+                display_time = weather['time']
+
+            values = [
+                display_time,
+                weather['temperature'],
+                weather['feels_like'],
+                weather['humidity'],
+                weather['condition'],
+                weather['rain_chance'],
+                weather['wind_scale'],
+                weather['wind_direction']
+            ]
+
+            bg_color = "#F5F5F5" if row_idx % 2 == 0 else "#FFFFFF"
+
+            for col_idx, value in enumerate(values):
+                label = ctk.CTkLabel(
+                    self.weather_table_frame,
+                    text=value,
+                    font=ctk.CTkFont(size=12),
+                    fg_color=bg_color,
+                    corner_radius=6
+                )
+                label.grid(row=row_idx, column=col_idx, padx=2, pady=2, sticky="nsew")
                 
-                result.append(f"\n日期: {date} ({period})")
-                for key, val in values.items():
-                    result.append(f"  {key}: {val}")
-                    
-        return "\n".join(result)
+        for i in range(len(headers)):
+            self.weather_table_frame.grid_columnconfigure(i, weight=1)
         
     def format_earthquake_data(self, data):
         if not data:
@@ -307,17 +341,87 @@ class WeatherApp:
     def get_weather(self):
         city = self.city_var.get()
         district = self.district_var.get()
-        element = self.elements_var.get()
         
         if not district:
             messagebox.showerror("錯誤", "請選擇行政區")
             return
             
-        result = get_weather_by_loction(city, district, [element])
-        if result:
-            formatted_data = self.format_weather_data(result)
-            self.weather_result.delete(1.0, ctk.END)
-            self.weather_result.insert(ctk.END, formatted_data)
+        # 請求所有需要的氣象資料
+        target_elements = [
+            "平均溫度",
+            "體感溫度",
+            "相對濕度",
+            "天氣現象",
+            "降雨機率",
+            "風向",
+            "蒲福風級"
+        ]
+        
+        result = get_weather_by_loction(city, district, target_elements)
+        print("\n=== Raw API Result ===")
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        
+        if result and isinstance(result, dict):
+            weather_data = []
+            try:
+                # 建立時間點列表（未來7天，每天白天和晚上）
+                dates = []
+                for weather_element in result.get('weather', []):
+                    for value in weather_element.get('elementValue', []):
+                        date_period = (value.get('date', ''), value.get('period', ''))
+                        if date_period not in dates:
+                            dates.append(date_period)
+                
+                # 排序日期和時段
+                dates.sort(key=lambda x: (x[0], x[1] != '白天'))  # 白天在前，晚上在後
+                
+                # 為每個時間點建立資料結構
+                for date, period in dates:
+                    weather_data.append({
+                        'time': f"{date} {period}",
+                        'temperature': '-',
+                        'feels_like': '-',
+                        'humidity': '-',
+                        'condition': '-',
+                        'rain_chance': '-',
+                        'wind_scale': '-',
+                        'wind_direction': '-'
+                    })
+                
+                # 填入氣象資料
+                for weather_element in result.get('weather', []):
+                    element_type = weather_element.get('elementType')
+                    for value in weather_element.get('elementValue', []):
+                        date = value.get('date', '')
+                        period = value.get('period', '')
+                        values = value.get('values', {})
+                        
+                        # 找到對應的時間點資料
+                        target_data = next((x for x in weather_data if x['time'] == f"{date} {period}"), None)
+                        if target_data:
+                            if element_type == "平均溫度":
+                                target_data['temperature'] = f"{values.get('Value', '-')}°C"
+                            elif element_type == "體感溫度":
+                                target_data['feels_like'] = f"{values.get('Value', '-')}°C"
+                            elif element_type == "相對濕度":
+                                target_data['humidity'] = f"{values.get('Value', '-')}%"
+                            elif element_type == "天氣現象":
+                                target_data['condition'] = values.get('Value', '-')
+                            elif element_type == "降雨機率":
+                                target_data['rain_chance'] = f"{values.get('Value', '-')}%"
+                            elif element_type == "風向":
+                                target_data['wind_direction'] = values.get('Value', '-')
+                            elif element_type == "蒲福風級":
+                                target_data['wind_scale'] = f"{values.get('Value', '-')}級"
+                
+                print("\n=== Processed Weather Data ===")
+                print(json.dumps(weather_data, indent=2, ensure_ascii=False))
+                
+                result = {'city': city, 'district': district, 'weather': weather_data}
+                self.format_weather_data(result)
+            except Exception as e:
+                print(f"\nError processing data: {str(e)}")
+                messagebox.showerror("錯誤", f"處理資料時發生錯誤: {str(e)}")
         else:
             messagebox.showerror("錯誤", "無法獲取天氣資料")
             
