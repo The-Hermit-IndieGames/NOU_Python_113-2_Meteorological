@@ -142,6 +142,6 @@ def get_weather_by_loction(city: str, district: str, target_elements: list = ['�
     return []
 
 
-# if __name__ == "__main__":
-#     result = get_weather_by_loction("臺北市", "大安區", ["平均溫度"])
-#     print(result)
+if __name__ == "__main__":
+    result = get_weather_by_loction("臺北市", "大安區", ["降雨機率"])
+    print(result)
