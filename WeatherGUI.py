@@ -8,7 +8,7 @@ class WeatherApp:
     def __init__(self, root):
         self.root = root
         self.root.title("氣象預報系統")
-        self.root.geometry("1200x960") 
+        self.root.geometry("1000x700") 
         
         # 設置主題
         self.theme_var = ctk.StringVar(value="blue")
@@ -26,7 +26,7 @@ class WeatherApp:
         self.title_label = ctk.CTkLabel(
             self.main_frame,
             text="氣象預報系統",
-            font=ctk.CTkFont(size=28, weight="bold")
+            font=ctk.CTkFont(size=24, weight="bold")
         )
         self.title_label.pack(pady=(0, 20))
         
@@ -35,7 +35,7 @@ class WeatherApp:
             self.root,
             values=["system", "light", "dark"],
             command=self.change_appearance_mode,
-            font=ctk.CTkFont(size=14),
+            font=ctk.CTkFont(size=12),
             width=100,
             anchor="center",
             dynamic_resizing=False
@@ -110,7 +110,7 @@ class WeatherApp:
             command=self.get_weather,
             width=200,
             height=40,
-            font=ctk.CTkFont(size=16, weight="bold"),
+            font=ctk.CTkFont(size=14, weight="bold"),
             fg_color="#1f538d",
             hover_color="#14375e"
         )
@@ -127,13 +127,9 @@ class WeatherApp:
             font=ctk.CTkFont(size=16, weight="bold")
         ).pack(pady=10)
         
-        # 結果表格框架 - 使用滾動框架以確保所有內容都可查看
-        self.weather_table_container = ctk.CTkFrame(result_frame, fg_color="transparent")
-        self.weather_table_container.pack(fill="both", expand=True, padx=10, pady=10)
-        
-        # 創建滾動框架來放置天氣表格
-        self.weather_table_frame = ctk.CTkScrollableFrame(self.weather_table_container, width=800, height=600)
-        self.weather_table_frame.pack(fill="both", expand=True)
+        # 結果表格框架
+        self.weather_table_frame = ctk.CTkFrame(result_frame)
+        self.weather_table_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
         # 初始化行政區
         self.update_districts()
@@ -150,22 +146,23 @@ class WeatherApp:
         # 地震類型選擇
         ctk.CTkLabel(
             control_frame,
-            text="地震類型:",
+            text="",
             font=ctk.CTkFont(size=14, weight="bold")
-        ).pack(pady=(10, 5))
+        ).pack(pady=(10, 15))
         
-        
-        self.earthquake_type_var = ctk.StringVar(value="0")
+        # 替換成下拉選單
+        earthquake_types = ["小區域有感地震", "顯著有感地震"]
+        self.earthquake_type_var = ctk.StringVar()
         self.earthquake_type_combo = ctk.CTkComboBox(
             control_frame,
-            values=["小區域有感地震", "顯著有感地震"],
+            values=earthquake_types,
             variable=self.earthquake_type_var,
             width=200,
             height=35,
             font=ctk.CTkFont(size=13)
         )
         self.earthquake_type_combo.pack(pady=5)
-        self.earthquake_type_combo.set("小區域有感地震")
+        self.earthquake_type_combo.set(earthquake_types[0])
         
         # 查詢按鈕
         self.query_button = ctk.CTkButton(
@@ -174,26 +171,26 @@ class WeatherApp:
             command=self.get_earthquake,
             width=200,
             height=40,
-            font=ctk.CTkFont(size=16, weight="bold"),
+            font=ctk.CTkFont(size=14, weight="bold"),
             fg_color="#1f538d",
             hover_color="#14375e"
         )
         self.query_button.pack(pady=20)
         
-        # 右側結果顯示區域 - 使用框架來讓內容可以滾動
-        result_container = ctk.CTkFrame(content_frame, fg_color="transparent")
-        result_container.pack(side="left", fill="both", expand=True, padx=(20, 0), pady=0)
+        # 右側結果顯示區域
+        result_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        result_frame.pack(side="left", fill="both", expand=True, padx=(20, 0), pady=0)
         
-        # 結果標題
+        # 查詢結果
         ctk.CTkLabel(
-            result_container,
-            text="地震資訊查詢結果",
+            result_frame,
+            text="",
             font=ctk.CTkFont(size=16, weight="bold")
-        ).pack(pady=(10, 5))
+        ).pack(pady=10)
         
-        # 結果顯示區域 - 使用框架來容納滾動視圖
-        self.earthquake_result = ctk.CTkFrame(result_container, fg_color="transparent")
-        self.earthquake_result.pack(fill="both", expand=True, padx=10, pady=10)
+        # 改為結果表格框架
+        self.earthquake_table_frame = ctk.CTkFrame(result_frame)
+        self.earthquake_table_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
     def update_districts(self, event=None):
         city = self.city_var.get()
@@ -218,24 +215,17 @@ class WeatherApp:
 
         # 表格標題
         headers = ["時間", "溫度", "體感溫度", "相對溼度", "天氣狀況", "降雨機率", "蒲福風級", "風向"]
-        header_widths = [100, 80, 80, 80, 120, 80, 80, 80]  # 自定義各列寬度
-        
-        header_frame = ctk.CTkFrame(self.weather_table_frame, fg_color="transparent")
-        header_frame.pack(fill="x", padx=2, pady=5)
-        
-        for col, (header, width) in enumerate(zip(headers, header_widths)):
+        for col, text in enumerate(headers):
             label = ctk.CTkLabel(
-                header_frame,
-                text=header,
-                font=ctk.CTkFont(size=16, weight="bold"),
+                self.weather_table_frame,
+                text=text,
+                font=ctk.CTkFont(size=12, weight="bold"),
                 fg_color="#2B5773", 
                 text_color="white", 
-                corner_radius=6,
-                width=width,
-                height=30
+                corner_radius=6
             )
             label.grid(row=0, column=col, padx=2, pady=2, sticky="nsew")
-            header_frame.grid_columnconfigure(col, weight=0)  # 固定寬度
+            self.weather_table_frame.grid_columnconfigure(col, weight=1)
 
         # 填入天氣資料
         for row_idx, weather in enumerate(data['weather'], start=1):
@@ -260,31 +250,142 @@ class WeatherApp:
                 weather['wind_scale'],
                 weather['wind_direction']
             ]
-            
-            # 創建每行的框架
-            row_frame = ctk.CTkFrame(self.weather_table_frame, fg_color="transparent")
-            row_frame.pack(fill="x", padx=2, pady=2)
 
-            for col_idx, (value, width) in enumerate(zip(values, header_widths)):
-                wrap_width = width - 10
-                
+            for col_idx, value in enumerate(values):
                 label = ctk.CTkLabel(
-                    row_frame,
+                    self.weather_table_frame,
                     text=value,
-                    font=ctk.CTkFont(size=13),
-                    wraplength=wrap_width,
-                    corner_radius=6,
-                    width=width,
-                    height=40,
-                    anchor="center"
+                    font=ctk.CTkFont(size=12),
+                    corner_radius=6
                 )
-                label.grid(row=0, column=col_idx, padx=2, pady=2, sticky="nsew")
-                row_frame.grid_columnconfigure(col_idx, weight=0)  # 固定寬度
+                label.grid(row=row_idx, column=col_idx, padx=2, pady=2, sticky="nsew")
                 
-            # 添加分隔線
-            separator = ctk.CTkFrame(self.weather_table_frame, height=1, fg_color="#CCCCCC")
-            separator.pack(fill="x", padx=5, pady=3)
-          
+        for i in range(len(headers)):
+            self.weather_table_frame.grid_columnconfigure(i, weight=1)
+        
+    def format_earthquake_data(self, data):
+        # 清除現有表格
+        for widget in self.earthquake_table_frame.winfo_children():
+            widget.destroy()
+        
+        if not data or not data.get('records', {}).get('Earthquake'):
+            label = ctk.CTkLabel(self.earthquake_table_frame, text="目前查無地震資料")
+            label.pack()
+            return
+    
+        # 建立捲動視窗來容納表格
+        self.eq_scroll_frame = ctk.CTkScrollableFrame(
+            self.earthquake_table_frame,
+            height=500,  # 設定適當的高度
+            width=700    # 設定適當的寬度
+        )
+        self.eq_scroll_frame.pack(fill="both", expand=True)
+        
+        # 表格標題
+        headers = ["發生時間", "震央位置", "規模", "深度", "最大震度", "地區", "描述"]
+        header_widths = [100, 110, 50, 70, 40, 70, 200]  # 設定各欄位的基本寬度
+    
+        # 建立表格頭行
+        header_frame = ctk.CTkFrame(self.eq_scroll_frame, fg_color="transparent")
+        header_frame.pack(fill="x", padx=5, pady=(5, 2))
+    
+        for col, (text, width) in enumerate(zip(headers, header_widths)):
+            header_cell = ctk.CTkFrame(header_frame, width=width, height=25, corner_radius=6, fg_color="#2B5773")
+            header_cell.pack(side="left", padx=2)
+            header_cell.pack_propagate(False)
+        
+            label = ctk.CTkLabel(
+                header_cell,
+                text=text,
+                font=ctk.CTkFont(size=12, weight="bold"),
+                text_color="white", 
+            )
+            label.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # 填入地震資料
+        eq_list = data.get('records', {}).get('Earthquake', [])
+        for row_idx, eq in enumerate(eq_list, start=1):
+            info = eq.get('EarthquakeInfo', {})
+            intensity = eq.get('Intensity', {})
+            shaking_areas = intensity.get('ShakingArea', [])
+        
+            # 取最大震度
+            max_area = None
+            max_intensity = ""
+            for area in shaking_areas:
+                ai = area.get('AreaIntensity', '')
+                # 確保不為空，並且是可比較的值
+                if ai and (not max_intensity or ai > max_intensity):
+                    max_intensity = ai
+                    max_area = area
+                
+            # 整理資料
+            origin_time = info.get('OriginTime', '-')
+            location = info.get('Epicenter', {}).get('Location', '-')
+            # 確保地震規模是有效值
+            magnitude_value = info.get('EarthquakeMagnitude', {}).get('MagnitudeValue')
+            magnitude = str(magnitude_value) if magnitude_value is not None else '-'
+        
+            # 確保深度是有效值
+            focal_depth = info.get('FocalDepth')
+            depth = f"{focal_depth} 公里" if focal_depth is not None else '-'
+        
+            if max_area:
+                area_intensity = max_area.get('AreaIntensity', '-')
+                county_name = max_area.get('CountyName', '-')
+            else:
+                area_intensity = '-'
+                county_name = '-'
+            
+            report_content = eq.get('ReportContent', '-')
+        
+            values = [
+                origin_time,
+                location,
+                magnitude,
+                depth,
+                area_intensity,
+                county_name,
+                report_content
+            ]
+        
+            # 設定每欄的換行寬度 (針對每個欄位)
+            wrap_lengths = [100, 100, 40, 60, 40, 60, 170]
+        
+            # 為每行建立一個框架
+            row_frame = ctk.CTkFrame(self.eq_scroll_frame, fg_color="transparent")
+            row_frame.pack(fill="x", padx=5, pady=5)
+        
+            # 計算這行最大需要的高度 (根據內容預計需要的行數)
+            max_height = 30
+            for i, (text_value, wrap_width) in enumerate(zip(values, wrap_lengths)):
+                if wrap_width > 0 and len(str(text_value)) > 0:
+                    # 根據文字長度和換行寬度估算需要的行數
+                    text_len = len(str(text_value))
+                    approx_lines = (text_len / (wrap_width / 7)) + 1  # 假設每7個像素寬約一個字
+                    cell_height = max(30, min(200, int(approx_lines * 20)))  # 每行大約20px高，最高200px
+                    max_height = max(max_height, cell_height)
+        
+            # 為此行的每個單元格建立框架
+            for col_idx, (value, wrap_length, width) in enumerate(zip(values, wrap_lengths, header_widths)):
+                # 確保所有值都是字符串
+                text_value = str(value) if value is not None else '-'
+            
+                # 建立單元格框架
+                cell_frame = ctk.CTkFrame(row_frame, width=width, height=max_height, corner_radius=6)
+                cell_frame.pack(side="left", padx=2)
+                cell_frame.pack_propagate(False)  # 防止框架縮小到標籤大小
+            
+                # 在單元格中加入標籤
+                label = ctk.CTkLabel(
+                    cell_frame,
+                    text=text_value,
+                    font=ctk.CTkFont(size=12),
+                    wraplength=wrap_length,
+                    justify="left"  # 文字靠左對齊
+                )
+                label.pack(fill="both", expand=True, padx=5, pady=5)
+        
     def get_weather(self):
         city = self.city_var.get()
         district = self.district_var.get()
@@ -369,109 +470,22 @@ class WeatherApp:
             messagebox.showerror("錯誤", "無法獲取天氣資料")
             
     def get_earthquake(self):
-        # 根據下拉式選單值獲取地震類型
-        earthquake_type_text = self.earthquake_type_combo.get()
-        # 將選項文字轉換為對應的數值
+        # 根據下拉選單獲取地震類型值
+        earthquake_type_text = self.earthquake_type_var.get()
         mode_type = 0 if earthquake_type_text == "小區域有感地震" else 1
         
-        result = self.api.getEarthquake(mode_type)
-        
-        # 清空先前顯示
-        for widget in self.earthquake_result.winfo_children():
-            widget.destroy()
-            
-        if not result['status']:
-            ctk.CTkLabel(self.earthquake_result, text=f"錯誤: {result['message']}").pack()
-            return
-            
-        data = result['data']
-        records = data.get('records', {})
-        eq_list = records.get('Earthquake', [])
-        
-        if not eq_list:
-            ctk.CTkLabel(self.earthquake_result, text="目前查無地震資料。").pack()
-            return
-
-        # 創建可滾動的框架
-        scroll_frame = ctk.CTkScrollableFrame(self.earthquake_result, width=850, height=500)
-        scroll_frame.pack(fill="both", expand=True, padx=5, pady=5)
-
-        # 標題列
-        headers = ["地震時間", "震央位置", "規模", "深度", "最大震度", "簡要描述"]
-        header_widths = [120, 120, 60, 60, 100, 350]  # 自定義各列寬度
-        
-        header_frame = ctk.CTkFrame(scroll_frame, fg_color="transparent")
-        header_frame.pack(fill="x", padx=2, pady=5)
-        
-        for col, (header, width) in enumerate(zip(headers, header_widths)):
-            label = ctk.CTkLabel(
-                header_frame,
-                text=header,
-                font=ctk.CTkFont(size=16, weight="bold"),
-                fg_color="#2B5773",
-                text_color="white",
-                corner_radius=6,
-                width=width
-            )
-            label.grid(row=0, column=col, padx=2, pady=2, sticky="nsew")
-            header_frame.grid_columnconfigure(col, weight=0)  # 不自動調整寬度
-
-        # 地震資料列
-        for row_idx, eq in enumerate(eq_list, start=1):
-            info = eq.get('EarthquakeInfo', {})
-            intensity = eq.get('Intensity', {})
-            shaking_areas = intensity.get('ShakingArea', [])
-            
-            # 找出最大震度地區
-            max_intensity = "-"
-            max_area = "-"
-            if shaking_areas:
-                # 嘗試找出最大震度地區
-                try:
-                    max_area_obj = max(shaking_areas, key=lambda a: int(a.get('AreaIntensity', '0') or '0'))
-                    max_intensity = max_area_obj.get('AreaIntensity', '-')
-                    max_area = max_area_obj.get('CountyName', '-')
-                except (ValueError, TypeError):
-                    # 如果無法比較震度，使用第一個地區
-                    max_area_obj = shaking_areas[0] if shaking_areas else {}
-                    max_intensity = max_area_obj.get('AreaIntensity', '-')
-                    max_area = max_area_obj.get('CountyName', '-')
-
-            # 準備顯示資料
-            epicenter = info.get('Epicenter', {}).get('Location', '-')
-            magnitude = info.get('EarthquakeMagnitude', {}).get('MagnitudeValue', '-')
-            depth = f"{info.get('FocalDepth', '-')} 公里"
-            origin_time = info.get('OriginTime', '-')
-            report = eq.get('ReportContent', '-')
-            
-            # 創建每行的框架
-            row_frame = ctk.CTkFrame(scroll_frame, fg_color="transparent")
-            row_frame.pack(fill="x", padx=2, pady=2)
-            
-            # 顯示資料
-            values = [origin_time, epicenter, magnitude, depth, f"{max_area} {max_intensity}", report]
-            
-            for col_idx, (val, width) in enumerate(zip(values, header_widths)):
-                # 為報告內容提供更大的換行寬度
-                wrap_width = 330 if col_idx == 5 else width - 10
-                
-                label = ctk.CTkLabel(
-                    row_frame,
-                    text=str(val),
-                    font=ctk.CTkFont(size=13),
-                    wraplength=wrap_width,
-                    corner_radius=4,
-                    width=width,
-                    height=50 if col_idx == 5 else 30,  # 給報告內容更多垂直空間
-                    anchor="w",  # 文字靠左對齊
-                    justify="left"  # 多行文字左對齊
-                )
-                label.grid(row=0, column=col_idx, padx=2, pady=2, sticky="nsew")
-                row_frame.grid_columnconfigure(col_idx, weight=0)  # 不自動調整寬度
-            
-            # 添加分隔線
-            separator = ctk.CTkFrame(scroll_frame, height=1, fg_color="#CCCCCC")
-            separator.pack(fill="x", padx=5, pady=3)
+        try:
+            result = self.api.getEarthquake(mode_type)
+            if result['status']:
+                self.format_earthquake_data(result['data'])
+            else:
+                messagebox.showerror("錯誤", result['message'])
+        except TypeError as e:
+            print(f"TypeError 發生: {str(e)}")
+            messagebox.showerror("錯誤", f"處理資料時發生錯誤: {str(e)}")
+        except Exception as e:
+            print(f"錯誤發生: {str(e)}")
+            messagebox.showerror("錯誤", f"發生未預期的錯誤: {str(e)}")
 
     def change_appearance_mode(self, new_mode):
         ctk.set_appearance_mode(new_mode)
