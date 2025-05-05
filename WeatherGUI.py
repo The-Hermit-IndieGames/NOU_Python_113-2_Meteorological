@@ -5,7 +5,8 @@ from RequestApi import RequestApi
 from app import get_weather_by_loction
 from datetime import datetime
 from datetime import date as DateToday
-
+from PIL import Image
+import os
 
 class WeatherApp:
     def __init__(self, root):
@@ -14,6 +15,9 @@ class WeatherApp:
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         self.root.geometry(f"{screen_width}x{screen_height}")
+        
+        # 初始化天氣圖示
+        self.weather_icons = self.load_weather_icons()
         
         # 設置主題
         self.theme_var = ctk.StringVar(value="blue")
@@ -209,6 +213,64 @@ class WeatherApp:
                 if districts:
                     self.district_combo.set(districts[0])
         
+    def load_weather_icons(self):
+        """載入天氣圖示（PNG）"""
+        icons = {}
+        icon_size = (40, 40)
+        icon_path = "weather_icons"
+
+        # 確保圖示資料夾存在
+        if not os.path.exists(icon_path):
+            os.makedirs(icon_path)
+            print(f"請在 {icon_path} 資料夾中放入天氣圖示（PNG 格式）")
+            return icons
+
+        # 定義天氣狀況和對應的圖示檔案名稱
+        weather_icon_mapping = {
+            "多雲": "多雲.png",
+            "陰": "陰.png",
+            "陰天": "陰天.png",
+            "陰時多雲": "陰時多雲.png",
+            "多雲時陰": "多雲時陰.png",
+            "雨": "雨.png",
+            "陣雨": "陣雨.png",
+            "短暫雨": "短暫雨.png",
+            "多雲短暫雨": "多雲短暫雨.png",
+            "午後短暫雨": "午後短暫雨.png",
+            "多雲午後短暫雨": "多雲午後短暫雨.png",
+            "晴": "晴.png",
+            "晴時多雲": "晴時多雲.png",
+            "晴時陰": "晴時陰.png",
+            "晴時多雲時陰": "晴時多雲時陰.png",
+            "晴時多雲時陰短暫雨": "晴時多雲時陰短暫雨.png",
+            "晴時多雲時陰陣雨": "晴時多雲時陰陣雨.png",
+            "晴時多雲時陰陣雨短暫雨": "晴時多雲時陰陣雨短暫雨.png",
+            "陰短暫陣雨或雷雨": "陰短暫陣雨或雷雨.png",
+        }
+
+        # 載入圖示
+        for weather, icon_file in weather_icon_mapping.items():
+            icon_path_full = os.path.join(icon_path, icon_file)
+            if os.path.exists(icon_path_full):
+                try:
+                    image = Image.open(icon_path_full)
+                    image = image.resize(icon_size, Image.Resampling.LANCZOS)
+                    icons[weather] = ctk.CTkImage(light_image=image, dark_image=image, size=icon_size)
+                    print(f"成功載入圖示: {icon_file}")
+                except Exception as e:
+                    print(f"無法載入圖示 {icon_file}: {str(e)}")
+            else:
+                print(f"找不到圖示檔案: {icon_path_full}")
+
+        return icons
+
+    def get_weather_icon(self, weather_text):
+        """根據天氣描述取得對應的圖示"""
+        for key in self.weather_icons.keys():
+            if key in weather_text:
+                return self.weather_icons[key]
+        return None
+
     def format_weather_data(self, data):
         for widget in self.weather_table_frame.winfo_children():
             widget.destroy()
@@ -323,19 +385,37 @@ class WeatherApp:
                     
                     weather_text = period_data.get('weather', '-')
 
+                    # 創建垂直排列的框架
+                    weather_content_frame = ctk.CTkFrame(
+                        weather_frame,
+                        fg_color="transparent"
+                    )
+                    weather_content_frame.place(relx=0.5, rely=0.5, anchor="center")
+                    
+                    # 顯示天氣圖示
+                    weather_icon = self.get_weather_icon(weather_text)
+                    if weather_icon:
+                        icon_label = ctk.CTkLabel(
+                            weather_content_frame,
+                            text="",
+                            image=weather_icon
+                        )
+                        icon_label.pack(pady=(0, 5))
+                    
+                    # 顯示天氣文字
                     if len(weather_text) > 10:
                         weather_text = '\n'.join([weather_text[i:i+10] for i in range(0, len(weather_text), 10)])
                     
                     weather_label = ctk.CTkLabel(
-                        weather_frame,
+                        weather_content_frame,
                         text=weather_text,
                         font=ctk.CTkFont(size=12),
                         fg_color="transparent",
-                        wraplength=60,
                         justify="center",
+                        wraplength=60,
                         text_color="black"
                     )
-                    weather_label.place(relx=0.5, rely=0.5, anchor="center")
+                    weather_label.pack()
 
                     # 溫度
                     temp_frame = ctk.CTkFrame(
@@ -678,9 +758,6 @@ class WeatherApp:
                                 wind_dir_match = re.search(r"(東北風|西北風|東南風|西南風|北風|南風|東風|西風)", description)
                                 if wind_dir_match and target_data['wind_direction'] == '-':
                                     target_data['wind_direction'] = wind_dir_match.group(1)
-                
-                print("\n=== Processed Weather Data ===")
-                print(json.dumps(weather_data, indent=2, ensure_ascii=False))
                 
                 result = {'city': city, 'district': district, 'weather': weather_data}
                 self.format_weather_data(result)
