@@ -3,6 +3,9 @@ from tkinter import messagebox
 import json
 from RequestApi import RequestApi
 from app import get_weather_by_loction
+from datetime import datetime
+from datetime import date as DateToday
+
 
 class WeatherApp:
     def __init__(self, root):
@@ -213,33 +216,96 @@ class WeatherApp:
             label.pack()
             return
 
-        # 表格標題
-        headers = ["時間", "溫度", "體感溫度", "相對溼度", "天氣狀況", "降雨機率", "蒲福風級", "風向"]
-        for col, text in enumerate(headers):
-            label = ctk.CTkLabel(
+        # 定義星期對照表
+        weekday_map = {
+            0: "一", 1: "二", 2: "三", 3: "四", 4: "五", 5: "六", 6: "日"
+        }
+
+        # 整理數據按日期分組
+        daily_data = {}
+        for weather in data['weather']:
+            date = weather['time'].split(' ')[0]
+            period = weather['time'].split(' ')[1]
+            if date not in daily_data:
+                daily_data[date] = {'白天': None, '晚上': None}
+            daily_data[date][period] = weather
+
+        row_labels = ["天氣狀況", "溫度", "降雨機率", "體感溫度", "相對溼度", "紫外線指數"]
+        
+        # 地區
+        location_label = ctk.CTkLabel(
+            self.weather_table_frame,
+            text=f"{data['city']}{data['district']}",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            fg_color="#2B5773",
+            text_color="white",
+            corner_radius=6,
+            wraplength=60,
+        )
+        location_label.grid(row=0, column=0, columnspan=1, padx=(5, 2), pady=(5, 2), sticky="nsew")
+
+        for i, label in enumerate(row_labels):
+            row_label = ctk.CTkLabel(
                 self.weather_table_frame,
-                text=text,
-                font=ctk.CTkFont(size=12, weight="bold"),
-                fg_color="#2B5773", 
-                text_color="white", 
-                corner_radius=6
+                text=label,
+                font=ctk.CTkFont(size=14, weight="bold"),
+                fg_color="#2B5773",
+                text_color="white",
+                corner_radius=6,
+                width=120 
             )
-            label.grid(row=0, column=col, padx=2, pady=2, sticky="nsew")
-            self.weather_table_frame.grid_columnconfigure(col, weight=1)
+            row_label.grid(row=i+1, column=0, padx=(5, 2), pady=1, sticky="nsew")
 
-        # 填入天氣資料
-        for row_idx, weather in enumerate(data['weather'], start=1):
-            # 從時間字串中提取日期和時段
-            time_parts = weather['time'].split(' ')
-            if len(time_parts) == 2:
-                date = time_parts[0]
-                period = time_parts[1]
-                # 只顯示月日
-                date = date[5:]  # 去掉年份和第一個橫槓
-                display_time = f"{date}\n{period}"
-            else:
-                display_time = weather['time']
+        # 填充天氣數據
+        col = 1
+        for date, periods in daily_data.items():
+            # 轉換日期格式和獲取星期
+            date_obj = datetime.strptime(date, '%Y-%m-%d')
+            weekday = weekday_map[date_obj.weekday()]
+            display_date = f"{date_obj.month:02d}/{date_obj.day:02d}\n星期{weekday}"
+            
+            # 創建日期框架
+            date_frame = ctk.CTkFrame(
+                self.weather_table_frame,
+                fg_color="#2B5773",
+                corner_radius=6,
+            )
+            date_frame.grid(row=0, column=col, columnspan=2, padx=1, pady=(5, 2), sticky="nsew")
+            
+            # 日期標題
+            date_label = ctk.CTkLabel(
+              date_frame,
+                text=f"{date_obj.month:02d}/{date_obj.day:02d}\n星期{weekday}",
+                font=ctk.CTkFont(size=12, weight="bold"),
+                text_color="white",
+            )
+            date_label.pack(pady=(5,0))
 
+            period_frame = ctk.CTkFrame(
+                date_frame,
+                fg_color="transparent"
+            )
+            period_frame.pack(fill="x", pady=(0,5))
+            
+            day_label = ctk.CTkLabel(
+                period_frame,
+                text="白天",
+                font=ctk.CTkFont(size=11),
+                text_color="white",
+                width=50
+            )
+            day_label.pack(side="left", padx=2)
+            
+            night_label = ctk.CTkLabel(
+                period_frame,
+                text="晚上",
+                font=ctk.CTkFont(size=11),
+                text_color="white",
+                width=50
+            )
+            night_label.pack(side="right", padx=2)
+"""
+#< feature/gui ---------------------------------------------------------------------
             values = [
                 display_time,
                 weather['temperature'],
@@ -261,7 +327,146 @@ class WeatherApp:
                 label.grid(row=row_idx, column=col_idx, padx=2, pady=2, sticky="nsew")
                 
         for i in range(len(headers)):
+======="""
+            # 白天和晚上數據
+            for period_idx, period_key in enumerate(['白天', '晚上']):
+                period_data = periods.get(period_key, {})
+                if period_data:
+                    # 天氣狀況
+                    weather_frame = ctk.CTkFrame(
+                        self.weather_table_frame,
+                        fg_color="#F5F5F5" if period_idx == 0 else "#FFFFFF",
+                        width=100, 
+                        height=80
+                    )
+                    weather_frame.grid(row=1, column=col, padx=1, pady=1, sticky="nsew")
+                    weather_frame.grid_propagate(False)
+                    
+                    weather_text = period_data.get('weather', '-')
+
+                    if len(weather_text) > 10:
+                        weather_text = '\n'.join([weather_text[i:i+10] for i in range(0, len(weather_text), 10)])
+                    
+                    weather_label = ctk.CTkLabel(
+                        weather_frame,
+                        text=weather_text,
+                        font=ctk.CTkFont(size=12),
+                        fg_color="transparent",
+                        wraplength=60,
+                        justify="center",
+                        text_color="black"
+                    )
+                    weather_label.place(relx=0.5, rely=0.5, anchor="center")
+
+                    # 溫度
+                    temp_frame = ctk.CTkFrame(
+                        self.weather_table_frame,
+                        fg_color="#F5F5F5" if period_idx == 0 else "#FFFFFF",
+                        width=100,
+                        height=40
+                    )
+                    temp_frame.grid(row=2, column=col, padx=1, pady=1, sticky="nsew")
+                    temp_frame.grid_propagate(False)
+                    
+                    temp_label = ctk.CTkLabel(
+                        temp_frame,
+                        text=period_data.get('temperature', '-'),
+                        font=ctk.CTkFont(size=12),
+                        fg_color="transparent",
+                        text_color="black"
+                    )
+                    temp_label.place(relx=0.5, rely=0.5, anchor="center")
+
+                    # 降雨機率
+                    rain_frame = ctk.CTkFrame(
+                        self.weather_table_frame,
+                        fg_color="#F5F5F5" if period_idx == 0 else "#FFFFFF",
+                        width=100,
+                        height=40
+                    )
+                    rain_frame.grid(row=3, column=col, padx=1, pady=1, sticky="nsew")
+                    rain_frame.grid_propagate(False)
+                    
+                    rain_label = ctk.CTkLabel(
+                        rain_frame,
+                        text=period_data.get('rain_chance', '-'),
+                        font=ctk.CTkFont(size=12),
+                        fg_color="transparent",
+                        text_color="black"
+                    )
+                    rain_label.place(relx=0.5, rely=0.5, anchor="center")
+
+                    # 體感溫度
+                    feels_frame = ctk.CTkFrame(
+                        self.weather_table_frame,
+                        fg_color="#F5F5F5" if period_idx == 0 else "#FFFFFF",
+                        width=100,
+                        height=60
+                    )
+                    feels_frame.grid(row=4, column=col, padx=1, pady=1, sticky="nsew")
+                    feels_frame.grid_propagate(False)
+                    
+                    feels_label = ctk.CTkLabel(
+                        feels_frame,
+                        text=period_data.get('feels_like', '-'),
+                        font=ctk.CTkFont(size=12),
+                        fg_color="transparent",
+                        justify="center",
+                        wraplength=60,
+                        text_color="black" 
+                    )
+                    feels_label.place(relx=0.5, rely=0.5, anchor="center")
+
+                    # 相對溼度
+                    humidity_frame = ctk.CTkFrame(
+                        self.weather_table_frame,
+                        fg_color="#F5F5F5" if period_idx == 0 else "#FFFFFF",
+                        width=100,
+                        height=40
+                    )
+                    humidity_frame.grid(row=5, column=col, padx=1, pady=1, sticky="nsew")
+                    humidity_frame.grid_propagate(False)
+                    
+                    humidity_label = ctk.CTkLabel(
+                        humidity_frame,
+                        text=period_data.get('humidity', '-'),
+                        font=ctk.CTkFont(size=12),
+                        fg_color="transparent",
+                        text_color="black"
+                    )
+                    humidity_label.place(relx=0.5, rely=0.5, anchor="center")
+
+                    # 紫外線指數 - 只在白天的第一個欄位創建，並跨兩列
+                    if period_key == '白天':
+                        uv_frame = ctk.CTkFrame(
+                            self.weather_table_frame,
+                            fg_color="#F5F5F5",
+                            width=200,  # 兩倍寬度
+                            height=40
+                        )
+                        uv_frame.grid(row=6, column=col, columnspan=2, padx=1, pady=1, sticky="nsew")
+                        uv_frame.grid_propagate(False)
+                        
+                        uv_label = ctk.CTkLabel(
+                            uv_frame,
+                            text=period_data.get('uv_index', '-'),
+                            font=ctk.CTkFont(size=12),
+                            fg_color="transparent",
+                            text_color="black"
+                        )
+                        uv_label.place(relx=0.5, rely=0.5, anchor="center")
+
+                col += 1
+
+        # 配置網格權重
+        self.weather_table_frame.grid_columnconfigure(0, weight=1)
+        for i in range(1, col):
+# > main ---------------------------------------------------------------------
             self.weather_table_frame.grid_columnconfigure(i, weight=1)
+        
+        # 配置行高
+        for i in range(7):  # 0-6行
+            self.weather_table_frame.grid_rowconfigure(i, weight=1)
         
     def format_earthquake_data(self, data):
         # 清除現有表格
@@ -402,7 +607,9 @@ class WeatherApp:
             "天氣現象",
             "降雨機率",
             "風向",
-            "蒲福風級"
+            "蒲福風級",
+            "紫外線指數",
+            "天氣預報綜合描述"
         ]
         
         result = get_weather_by_loction(city, district, target_elements)
@@ -418,8 +625,14 @@ class WeatherApp:
                         if date_period not in dates:
                             dates.append(date_period)
                 
-                # 排序日期和時段
-                dates.sort(key=lambda x: (x[0], x[1] != '白天'))  # 白天在前，晚上在後
+                # 檢查今天日期是否缺少白天資料，若是則補進空值
+                today_str = DateToday.today().strftime("%Y-%m-%d")
+                has_today_day = any(d == today_str and p == "白天" for d, p in dates)
+                if not has_today_day:
+                    dates.insert(0, (today_str, "白天"))
+                
+                # 排序日期和時段，白天前晚上後
+                dates.sort(key=lambda x: (x[0], x[1] != '白天'))
                 
                 # 為每個時間點建立資料結構
                 for date, period in dates:
@@ -431,18 +644,20 @@ class WeatherApp:
                         'weather': '-',
                         'rain_chance': '-',
                         'wind_scale': '-',
-                        'wind_direction': '-'
+                        'wind_direction': '-',
+                        'uv_index': '-',
+                        'description': '-'
                     })
                 
                 # 填入氣象資料
+                import re
                 for weather_element in result.get('weather', []):
                     element_type = weather_element.get('elementType')
                     for value in weather_element.get('elementValue', []):
                         date = value.get('date', '')
                         period = value.get('period', '')
                         values = value.get('values', {})
-                        print(f"values: {values}")
-                        
+
                         # 找到對應的時間點資料
                         target_data = next((x for x in weather_data if x['time'] == f"{date} {period}"), None)
                         if target_data:
@@ -460,6 +675,34 @@ class WeatherApp:
                                 target_data['wind_direction'] = values['WindDirection']
                             elif element_type == "蒲福風級" and "WindScale" in values:
                                 target_data['wind_scale'] = f"{values['WindScale']}級" if values['WindScale'] != '-' else '-'
+                            elif element_type == "紫外線指數" and "UVIndex" in values:
+                                target_data['uv_index'] = values['UVIndex']
+                            elif element_type == "天氣預報綜合描述" and "WeatherDescription" in values:
+                                description = values['WeatherDescription']
+                                target_data['description'] = description
+                                # Extract "溫度攝氏22至25度。舒適。" → assign to feels_like
+                                temp_match = re.search(r"(溫度攝氏[\d至]+度。[^\n。]*)", description)
+                                if temp_match and target_data['feels_like'] == '-':
+                                    target_data['feels_like'] = temp_match.group(1)
+                                # Extract "相對濕度90%" → assign to humidity
+                                humidity_match = re.search(r"相對濕度(\d+)%", description)
+                                if humidity_match and target_data['humidity'] == '-':
+                                    target_data['humidity'] = f"{humidity_match.group(1)}%"
+                                # Extract "降雨機率60%" → assign to rain_chance
+                                rain_match = re.search(r"降雨機率(\d+)%", description)
+                                if rain_match and target_data['rain_chance'] == '-':
+                                    target_data['rain_chance'] = f"{rain_match.group(1)}%"
+                                # Extract "風速<= 1級" → assign to wind_scale
+                                wind_scale_match = re.search(r"風速.?=?\s?(\d+)級", description)
+                                if wind_scale_match and target_data['wind_scale'] == '-':
+                                    target_data['wind_scale'] = f"{wind_scale_match.group(1)}級"
+                                # Extract "東北風" → assign to wind_direction
+                                wind_dir_match = re.search(r"(東北風|西北風|東南風|西南風|北風|南風|東風|西風)", description)
+                                if wind_dir_match and target_data['wind_direction'] == '-':
+                                    target_data['wind_direction'] = wind_dir_match.group(1)
+                
+                print("\n=== Processed Weather Data ===")
+                print(json.dumps(weather_data, indent=2, ensure_ascii=False))
                 
                 result = {'city': city, 'district': district, 'weather': weather_data}
                 self.format_weather_data(result)
