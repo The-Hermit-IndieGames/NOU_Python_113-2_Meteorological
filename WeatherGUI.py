@@ -11,7 +11,9 @@ class WeatherApp:
     def __init__(self, root):
         self.root = root
         self.root.title("氣象預報系統")
-        self.root.geometry("1000x700") 
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        self.root.geometry(f"{screen_width}x{screen_height}")
         
         # 設置主題
         self.theme_var = ctk.StringVar(value="blue")
