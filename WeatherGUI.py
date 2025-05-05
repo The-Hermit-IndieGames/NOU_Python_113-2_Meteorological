@@ -304,30 +304,7 @@ class WeatherApp:
                 width=50
             )
             night_label.pack(side="right", padx=2)
-"""
-#< feature/gui ---------------------------------------------------------------------
-            values = [
-                display_time,
-                weather['temperature'],
-                weather['feels_like'],
-                weather['humidity'],
-                weather['weather'],
-                weather['rain_chance'],
-                weather['wind_scale'],
-                weather['wind_direction']
-            ]
 
-            for col_idx, value in enumerate(values):
-                label = ctk.CTkLabel(
-                    self.weather_table_frame,
-                    text=value,
-                    font=ctk.CTkFont(size=12),
-                    corner_radius=6
-                )
-                label.grid(row=row_idx, column=col_idx, padx=2, pady=2, sticky="nsew")
-                
-        for i in range(len(headers)):
-======="""
             # 白天和晚上數據
             for period_idx, period_key in enumerate(['白天', '晚上']):
                 period_data = periods.get(period_key, {})
@@ -461,7 +438,6 @@ class WeatherApp:
         # 配置網格權重
         self.weather_table_frame.grid_columnconfigure(0, weight=1)
         for i in range(1, col):
-# > main ---------------------------------------------------------------------
             self.weather_table_frame.grid_columnconfigure(i, weight=1)
         
         # 配置行高
