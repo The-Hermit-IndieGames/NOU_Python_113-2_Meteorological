@@ -715,3 +715,27 @@ if __name__ == "__main__":
     root = ctk.CTk()
     app = WeatherApp(root)
     root.mainloop()
+
+
+    
+    # 匯出命令(無控制台)
+    # pyinstaller --onefile --name "氣象預報系統 Windows/iOS v0.1.0" --noconsole <your_script.py>
+    
+    # 匯出命令(有控制台)
+    # pyinstaller --onefile --name "氣象預報系統 Windows/iOS v0.1.0 debug" <your_script.py>
+
+    # <your_script.py> 填入完整路徑
+    # --name "氣象預報系統 Windows/iOS v0.1.0" 用於設置匯出後檔名，建議: "房價預測器 OS系統 版本號"
+
+    # 開始匯出後會出現 build 資料夾並產生傳遞檔案，可在匯出後刪除
+    # [檔名].spec 檔案是 PyInstaller 產生執行檔時的配置文件，可在匯出後刪除
+    # 匯出完成後檔案(.exe或.app)將保存在 dist 資料夾，是我們的最終成品
+
+    # Windows 版  by 陳銘泓
+    # pyinstaller --onefile --name "氣象預報系統 Windows v0.1.0 debug" "C:\Users\陳銘泓\Desktop\課程與工作\學校(空大)\空大113-2\Python 程式專題實作\NOU_Python_113-2_Meteorological\WeatherGUI.py"
+    # pyinstaller --onefile --name "氣象預報系統 Windows v0.1.0" --noconsole "C:\Users\陳銘泓\Desktop\課程與工作\學校(空大)\空大113-2\Python 程式專題實作\NOU_Python_113-2_Meteorological\WeatherGUI.py"
+
+    # iOS 版  by ???
+    # pyinstaller --onefile --name "氣象預報系統 iOS v0.1.0 debug" "完整路徑"
+    # pyinstaller --onefile --name "氣象預報系統 iOS v0.1.0" --noconsole "完整路徑"
+    
