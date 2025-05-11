@@ -577,12 +577,12 @@ class WeatherApp:
         spacer_bottom.pack(expand=True)
 
         return icon_frame
-
+    
     def format_earthquake_data(self, data):
         # 清除現有表格
         for widget in self.earthquake_table_frame.winfo_children():
             widget.destroy()
-    
+
         if not data or not data.get('records', {}).get('Earthquake'):
             label = ctk.CTkLabel(self.earthquake_table_frame, text="目前查無地震資料")
             label.pack()
@@ -591,18 +591,24 @@ class WeatherApp:
         # 創建主表格框架
         main_table_frame = ctk.CTkFrame(self.earthquake_table_frame, fg_color="transparent")
         main_table_frame.pack(fill="both", expand=True, padx=5, pady=5)
-    
-        
+
         self.earthquake_main_table = main_table_frame
-    
+
         # 標題
         headers = ["發生時間", "震央位置", "規模", "深度", "最大震度", "地區", "描述"]
-    
-        
+
+        # 預設列寬度權重 (描述欄位給予更多空間)
+        col_weights = [1, 1, 1, 1, 1, 1, 3]
+
+        # 設定列寬權重
+        for i, weight in enumerate(col_weights):
+            main_table_frame.grid_columnconfigure(i, weight=weight)
+
+        # 繪製標題列
         for col, text in enumerate(headers):
             header_cell = ctk.CTkFrame(main_table_frame, corner_radius=6, fg_color="#2B5773")
             header_cell.grid(row=0, column=col, padx=2, pady=2, sticky="news")
-    
+
             label = ctk.CTkLabel(
                 header_cell,
                 text=text,
@@ -611,16 +617,32 @@ class WeatherApp:
                 justify="center"
             )
             label.pack(fill="both", expand=True, padx=5, pady=5)
-    
+
         # 填入地震數據
         eq_list = data.get('records', {}).get('Earthquake', [])
-    
-        for row_idx, eq in enumerate(eq_list):
-            row_num = row_idx + 1
+
+        row_heights = [40]  
+        for _ in range(len(eq_list)):
+            row_heights.append(60)  
+
+        # 設定行高
+        for i, height in enumerate(row_heights):
+            main_table_frame.grid_rowconfigure(i, minsize=height)
+
+        # 計算換行寬度
+        base_width = self.earthquake_table_frame.winfo_width()
+        if base_width <= 1:  
+            base_width = 800
+
+        total_weight = sum(col_weights)
+        col_wraplengths = [int((weight / total_weight) * base_width * 0.85) for weight in col_weights]
+
+        # 處理每行資料
+        for row_idx, eq in enumerate(eq_list, 1):
             info = eq.get('EarthquakeInfo', {})
             intensity = eq.get('Intensity', {})
             shaking_areas = intensity.get('ShakingArea', [])
-    
+
             # 取最大震度
             max_area = None
             max_intensity = ""
@@ -629,25 +651,25 @@ class WeatherApp:
                 if ai and (not max_intensity or ai > max_intensity):
                     max_intensity = ai
                     max_area = area
-        
-            
+
+            # 提取所需數據
             origin_time = info.get('OriginTime', '-')
             location = info.get('Epicenter', {}).get('Location', '-')
             magnitude_value = info.get('EarthquakeMagnitude', {}).get('MagnitudeValue')
             magnitude = str(magnitude_value) if magnitude_value is not None else '-'
-    
+
             focal_depth = info.get('FocalDepth')
             depth = f"{focal_depth} 公里" if focal_depth is not None else '-'
-    
+
             if max_area:
                 area_intensity = max_area.get('AreaIntensity', '-')
                 county_name = max_area.get('CountyName', '-')
             else:
                 area_intensity = '-'
                 county_name = '-'
-        
+
             report_content = eq.get('ReportContent', '-')
-    
+
             values = [
                 origin_time,
                 location,
@@ -657,41 +679,57 @@ class WeatherApp:
                 county_name,
                 report_content
             ]
-    
-            
+        
+            cell_bg_color = "#F5F5F5" if row_idx % 2 == 0 else "#FFFFFF"
+
+            # 儲存標籤對象以便後續更新
+            self.earthquake_labels = getattr(self, 'earthquake_labels', {})
+            if row_idx not in self.earthquake_labels:
+                self.earthquake_labels[row_idx] = {}
+        
             for col_idx, value in enumerate(values):
                 text_value = str(value) if value is not None else '-'
-            
-                
-                cell_bg_color = "#F5F5F5" if row_idx % 2 == 0 else "#FFFFFF"
+    
                 cell_frame = ctk.CTkFrame(main_table_frame, corner_radius=6, fg_color=cell_bg_color)
-                cell_frame.grid(row=row_num, column=col_idx, padx=2, pady=2, sticky="news")
-            
-                
-                if col_idx == 4:
-                    intensity_frame = self.create_intensity_icon(cell_frame, text_value)
-                else:
-                    
+                cell_frame.grid(row=row_idx, column=col_idx, padx=2, pady=2, sticky="news")
+    
+                if col_idx == 4:  # 最大震度欄位
+                    self.create_intensity_icon(cell_frame, text_value)
+                else:                    
                     label = ctk.CTkLabel(
                         cell_frame,
                         text=text_value,
                         font=ctk.CTkFont(size=12),
-                        justify="left" if col_idx == 6 else "center", 
+                        justify="left" if col_idx == 6 else "center",  
                         text_color="black",
-                        pady=8,
-                        padx=8
+                        wraplength=col_wraplengths[col_idx],  
                     )
                     label.pack(fill="both", expand=True, padx=5, pady=5)
+                    self.earthquake_labels[row_idx][col_idx] = label
     
-        # 配置網格權重
-        main_table_frame.grid_columnconfigure(0, weight=1)
-        for i in range(1, len(headers)):
-            main_table_frame.grid_columnconfigure(i, weight=1)
-    
-        # 配置行高
-        for i in range(len(eq_list) + 1):
-            main_table_frame.grid_rowconfigure(i, weight=1)
+        # 定義更新換行寬度的函數
+        def update_wraplengths(event=None):
+            current_width = self.earthquake_table_frame.winfo_width()
+            if current_width <= 1:
+                return
         
+            new_wraplengths = [int((weight / total_weight) * current_width * 0.85) for weight in col_weights]
+        
+            # 更新所有標籤的換行寬度
+            for row in self.earthquake_labels:
+                for col, label in self.earthquake_labels[row].items():
+                    label.configure(wraplength=new_wraplengths[col])
+    
+        # 綁定更新函數到類別
+        self.update_earthquake_wraplengths = update_wraplengths
+    
+        # 綁定視窗大小變化事件
+        self.earthquake_table_frame.bind("<Configure>", self.update_earthquake_wraplengths)
+    
+        # 初始更新一次
+        main_table_frame.update_idletasks()
+        self.update_earthquake_wraplengths()
+
     def get_weather(self):
         city = self.city_var.get()
         district = self.district_var.get()
