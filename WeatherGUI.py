@@ -7,6 +7,7 @@ from datetime import datetime
 from datetime import date as DateToday
 from PIL import Image
 import os
+import sys
 
 class WeatherApp:
     def __init__(self, root):
@@ -212,6 +213,20 @@ class WeatherApp:
                 self.district_combo.configure(values=districts)
                 if districts:
                     self.district_combo.set(districts[0])
+
+    def resource_path(self, relative_path):
+        """取得執行路徑，不論是原始執行或經 PyInstaller 打包"""
+        try:
+                    base_path = sys._MEIPASS  # PyInstaller onefile 暫存路徑
+        except AttributeError:
+            base_path = os.path.abspath(".")
+            # 僅開發時檢查圖示資料夾
+            folder = os.path.join(base_path, "weather_icons")
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+                print("已建立資料夾 weather_icons，請放入對應圖示（PNG）後再執行。")
+
+        return os.path.join(base_path, relative_path)
         
     def load_weather_icons(self):
         """載入天氣圖示（PNG）"""
@@ -220,10 +235,10 @@ class WeatherApp:
         icon_path = "weather_icons"
 
         # 確保圖示資料夾存在
-        if not os.path.exists(icon_path):
-            os.makedirs(icon_path)
-            print(f"請在 {icon_path} 資料夾中放入天氣圖示（PNG 格式）")
-            return icons
+        # if not os.path.exists(icon_path):
+        #     os.makedirs(icon_path)
+        #     print(f"請在 {icon_path} 資料夾中放入天氣圖示（PNG 格式）")
+        #     return icons
 
         # 定義天氣狀況和對應的圖示檔案名稱
         weather_icon_mapping = {
@@ -249,8 +264,25 @@ class WeatherApp:
         }
 
         # 載入圖示
+        # for weather, icon_file in weather_icon_mapping.items():
+        #     icon_path_full = os.path.join(icon_path, icon_file)
+        #     if os.path.exists(icon_path_full):
+        #         try:
+        #             image = Image.open(icon_path_full)
+        #             image = image.resize(icon_size, Image.Resampling.LANCZOS)
+        #             icons[weather] = ctk.CTkImage(light_image=image, dark_image=image, size=icon_size)
+        #             print(f"成功載入圖示: {icon_file}")
+        #         except Exception as e:
+        #             print(f"無法載入圖示 {icon_file}: {str(e)}")
+        #     else:
+        #         print(f"找不到圖示檔案: {icon_path_full}")
+
+        # return icons
+    
         for weather, icon_file in weather_icon_mapping.items():
-            icon_path_full = os.path.join(icon_path, icon_file)
+        # 使用 resource_path 抓取正確路徑
+            icon_path_full = self.resource_path(os.path.join(icon_path, icon_file))
+
             if os.path.exists(icon_path_full):
                 try:
                     image = Image.open(icon_path_full)
@@ -879,10 +911,10 @@ if __name__ == "__main__":
 
     
     # 匯出命令(無控制台)
-    # pyinstaller --onefile --name "氣象預報系統 Windows/iOS v0.1.0" --noconsole <your_script.py>
+    # pyinstaller --onefile --add-data "weather_icons;weather_icons" --name "氣象預報系統 Windows/iOS v0.1.0" --noconsole <your_script.py>
     
     # 匯出命令(有控制台)
-    # pyinstaller --onefile --name "氣象預報系統 Windows/iOS v0.1.0 debug" <your_script.py>
+    # pyinstaller --onefile --add-data "weather_icons;weather_icons" --name "氣象預報系統 Windows/iOS v0.1.0 debug" <your_script.py>
 
     # <your_script.py> 填入完整路徑
     # --name "氣象預報系統 Windows/iOS v0.1.0" 用於設置匯出後檔名，建議: "房價預測器 OS系統 版本號"
@@ -891,11 +923,9 @@ if __name__ == "__main__":
     # [檔名].spec 檔案是 PyInstaller 產生執行檔時的配置文件，可在匯出後刪除
     # 匯出完成後檔案(.exe或.app)將保存在 dist 資料夾，是我們的最終成品
 
-    # Windows 版  by 陳銘泓
-    # pyinstaller --onefile --name "氣象預報系統 Windows v0.1.0 debug" "C:\Users\陳銘泓\Desktop\課程與工作\學校(空大)\空大113-2\Python 程式專題實作\NOU_Python_113-2_Meteorological\WeatherGUI.py"
-    # pyinstaller --onefile --name "氣象預報系統 Windows v0.1.0" --noconsole "C:\Users\陳銘泓\Desktop\課程與工作\學校(空大)\空大113-2\Python 程式專題實作\NOU_Python_113-2_Meteorological\WeatherGUI.py"
+    # 通過  --add-data "weather_icons;weather_icons" 將圖片資料夾打包
 
     # iOS 版  by ???
-    # pyinstaller --onefile --name "氣象預報系統 iOS v0.1.0 debug" "完整路徑"
-    # pyinstaller --onefile --name "氣象預報系統 iOS v0.1.0" --noconsole "完整路徑"
+    # pyinstaller --onefile --add-data "weather_icons;weather_icons" --name "氣象預報系統 iOS v0.1.0 debug" "完整路徑"
+    # pyinstaller --onefile --add-data "weather_icons;weather_icons" --name "氣象預報系統 iOS v0.1.0" --noconsole "完整路徑"
     
