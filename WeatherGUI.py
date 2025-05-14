@@ -247,6 +247,7 @@ class WeatherApp:
             "陰天": "陰天.png",
             "陰時多雲": "陰時多雲.png",
             "多雲時陰": "多雲時陰.png",
+            "多雲午後短暫雷陣雨": "多雲午後短暫雷陣雨.png",
             "雨": "雨.png",
             "陣雨": "陣雨.png",
             "短暫雨": "短暫雨.png",
@@ -298,6 +299,16 @@ class WeatherApp:
 
     def get_weather_icon(self, weather_text):
         """根據天氣描述取得對應的圖示"""
+        # 原寫法會遇到比對上的問題例如「晴時多雲」跟「多雲」如果優先比對到多雲，就會返回多雲的圖片
+        # for key in self.weather_icons.keys():
+        #     if key in weather_text:
+
+        #         return self.weather_icons[key]
+        # return None
+        """採用先做完整比對，在進行模糊比對 create by Ocean"""
+        if weather_text in self.weather_icons:
+            return self.weather_icons[weather_text]
+        #如果比對不到在採用key來進行模糊比對（隨便抓一個有的） 
         for key in self.weather_icons.keys():
             if key in weather_text:
                 return self.weather_icons[key]
@@ -925,7 +936,9 @@ if __name__ == "__main__":
 
     # 通過  --add-data "weather_icons;weather_icons" 將圖片資料夾打包
 
-    # iOS 版  by ???
-    # pyinstaller --onefile --add-data "weather_icons;weather_icons" --name "氣象預報系統 iOS v0.1.0 debug" "完整路徑"
-    # pyinstaller --onefile --add-data "weather_icons;weather_icons" --name "氣象預報系統 iOS v0.1.0" --noconsole "完整路徑"
+    # iOS 版  by Ocean 2025-05-15
+    # 制台版本
+    # pyinstaller --onefile --windowed --add-data "weather_icons:weather_icons" --name "氣象預報系統 iOS v0.1.0 debug" "WeatherGUI.py"
+    # 無控制台版本
+    # pyinstaller --onefile --windowed --add-data "weather_icons:weather_icons" --name "氣象預報系統 iOS v0.1.0" --noconsole "WeatherGUI.py"
     
