@@ -1,48 +1,58 @@
 # NOU_Python_113-2_Meteorological
  NOU Python 113-2 期末專題:氣象預報
 
+Mermaid 3
  ```mermaid
 flowchart TD
-    %% 資料呈現模組
+    %% 起點
+    A((開始：開啟 GUI))
+
+    %% GUI 模組
     subgraph 資料呈現 WeatherGUI.py
-        A[開始：使用者操作介面]
-        B[呼叫 get_weather_by_loction：傳入城市、區域、元素]
-        C[呼叫 getEarthquake：傳入地震類型模式]
-        D[從 weather_icons 資料夾載入對應圖示]
-        E[顯示天氣與地震資訊]
-        F[結束：資料呈現完成]
+        A --> B[載入主畫面]
+        B --> C[切換至 WeatherTab]
+        B --> D[切換至 EarthquakeTab]
+        B --> Z{外觀模式切換}
+        Z --> B
+        
+        %% 天氣流程
+        C --> E{選擇城市}
+        E --> F[更新行政區]
+        F --> G{選擇行政區}
+        G --> H[執行 get_weather_by_loction]
+
+        %% 地震流程
+        D --> I{選擇地震類型}
+        I --> J[執行 getEarthquake]
     end
 
     %% 資料處理模組
     subgraph 資料處理 app.py
-        G[接收城市與區域等資訊]
-        H[呼叫 getWeatherByCity：取得指定城市天氣資料]
-        I[處理並篩選所需氣象元素]
-        J[回傳資料給 WeatherGUI.py]
+        H --> K[處理輸入：城市、區域、元素]
+        K --> L[呼叫 getWeatherByCity]
+        M[篩選與整理氣象資料]
     end
 
     %% 資料蒐集模組
     subgraph 資料蒐集 RequestApi.py
-        K[使用 氣象資料開放平臺 API 取得天氣資料]
-        M[取得地震資料：依照 mode_type 模式]
+        L --> N[存取氣象資料開放平臺 API]
+        J --> O[依 mode_type 取得地震資料]
+        N --> M
     end
 
-    %% 流程連線
-    A --> B
-    A --> C
-    A --> D
-    B --> G
-    G --> H
-    H --> K
-    K --> I
-    I --> J
-    J --> E
-    C --> M
-    M --> E
-    D --> E
-    E --> F
-```
+    %% 顯示階段與結尾
+    subgraph 資料呈現 WeatherGUI.py
+    M --> P[顯示天氣結果]
+        Q[載入圖示自 weather_icons] --> P
 
+        O --> R[顯示地震結果]
+
+        P --> S((呈現於主畫面))
+        R --> S
+    end
+
+```
+Mermaid 2
 ```mermaid
 flowchart TD
     Start([開始])--> MainWindow[GUI介面]
