@@ -43,12 +43,11 @@ flowchart TD
     %% 顯示階段與結尾
     subgraph 資料呈現 WeatherGUI.py
     M --> P[顯示天氣結果]
-        Q[載入圖示自 weather_icons] --> P
-
+        Q[從 weather_icons 載入圖示] --> P
         O --> R[顯示地震結果]
-
         P --> S((呈現於主畫面))
         R --> S
+        S --> B
     end
 
 ```
