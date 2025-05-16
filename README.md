@@ -7,47 +7,51 @@ flowchart LR
     %% 起點
     A((開始：開啟 GUI))
 
-    %% GUI 模組
-    subgraph 資料呈現 WeatherGUI.py
+    %% GUI 模組 - 垂直呈現
+    subgraph WeatherGUI.py[資料呈現 WeatherGUI.py]
+        direction TB
         A --> B[載入主畫面]
         B --> C[切換至 WeatherTab]
         B --> D[切換至 EarthquakeTab]
         B --> Z{外觀模式切換}
         Z --> B
-        
-        %% 天氣流程
+
+        %% 天氣操作流程
         C --> E{選擇城市}
         E --> F[更新行政區]
         F --> G{選擇行政區}
         G --> H[執行 get_weather_by_loction]
 
-        %% 地震流程
+        %% 地震操作流程
         D --> I{選擇地震類型}
         I --> J[執行 getEarthquake]
     end
 
-    %% 資料處理模組
-    subgraph 資料處理 app.py
-        H --> K[處理輸入：城市、區域、元素]
+    %% app.py 模組 - 水平排列
+    subgraph app.py[資料處理 app.py]
+        direction LR
+        H --> K[處理輸入]
         K --> L[呼叫 getWeatherByCity]
-        M[篩選與整理氣象資料]
+        L --> M[篩選與整理氣象資料]
     end
 
-    %% 資料蒐集模組
-    subgraph 資料蒐集 RequestApi.py
+    %% API 模組 - 垂直排列
+    subgraph RequestApi.py[資料蒐集 RequestApi.py]
+        direction TB
         L --> N[存取氣象資料開放平臺 API]
-        J --> O[依 mode_type 取得地震資料]
         N --> M
+        J --> O[依 mode_type 取得地震資料]
     end
 
-    %% 顯示階段與結尾
-    subgraph 資料呈現 WeatherGUI.py
-    M --> P[顯示天氣結果]
+    %% 顯示結果與結尾 - 水平
+    subgraph 顯示與結束
+        direction LR
+        M --> P[顯示天氣結果]
         Q[從 weather_icons 載入圖示] --> P
         O --> R[顯示地震結果]
-        P --> S((呈現於主畫面))
+        P --> S((回主畫面))
         R --> S
-        S --> B
+        S --> T((結束))
     end
 
 ```
