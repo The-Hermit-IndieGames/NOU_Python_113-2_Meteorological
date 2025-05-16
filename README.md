@@ -11,8 +11,8 @@ flowchart LR
     subgraph WeatherGUI.py[資料呈現 WeatherGUI.py]
         direction TB
         A --> B[載入主畫面]
-        B --> C[切換至 WeatherTab]
-        B --> D[切換至 EarthquakeTab]
+        B --> C[切換至<br>WeatherTab]
+        B --> D[切換至<br>EarthquakeTab]
         B --> Z{外觀模式切換}
         Z --> B
 
@@ -20,18 +20,17 @@ flowchart LR
         C --> E{選擇城市}
         E --> F[更新行政區]
         F --> G{選擇行政區}
-        G --> H[執行 get_weather_by_loction]
+        G --> H[執行<br>get_weather_by_loction]
 
         %% 地震操作流程
         D --> I{選擇地震類型}
-        I --> J[執行 getEarthquake]
+        I --> J[執行<br>getEarthquake]
     end
 
     %% app.py 模組 - 水平排列
     subgraph app.py[資料處理 app.py]
         direction LR
-        H --> K[處理輸入]
-        K --> L[呼叫 getWeatherByCity]
+        H --> L[呼叫<br>getWeatherByCity]
         L --> M[篩選與整理氣象資料]
     end
 
@@ -40,14 +39,14 @@ flowchart LR
         direction TB
         L --> N[存取氣象資料開放平臺 API]
         N --> M
-        J --> O[依 mode_type 取得地震資料]
+        J --> O[依 mode_type<br>取得地震資料]
     end
 
     %% 顯示結果與結尾 - 水平
     subgraph 顯示與結束
         direction LR
         M --> P[顯示天氣結果]
-        Q[從 weather_icons 載入圖示] --> P
+        Q[從 weather_icons<br>載入圖示] --> P
         O --> R[顯示地震結果]
         P --> S((回主畫面))
         R --> S
