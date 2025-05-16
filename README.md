@@ -1,9 +1,9 @@
 # NOU_Python_113-2_Meteorological
- NOU Python 113-2 期末專題:氣象預報
-
-Mermaid 3
+### NOU Python 113-2 期末專題:氣象預報
+---
+### 流程圖:
  ```mermaid
-flowchart TD
+flowchart LR
     %% 起點
     A((開始：開啟 GUI))
 
@@ -51,37 +51,4 @@ flowchart TD
     end
 
 ```
-Mermaid 2
-```mermaid
-flowchart TD
-    Start([開始])--> MainWindow[GUI介面]
-    
-    subgraph 主功能模組
-        MainWindow --> WeatherTab[天氣預報頁面]
-        MainWindow --> EarthquakeTab[地震資訊頁面]
-    end
-    
-    subgraph 天氣預報流程
-        WeatherTab --> CitySelect{城市選擇}
-        CitySelect -->|選擇城市| DistrictUpdate[更新行政區]
-        DistrictUpdate --> DistrictSelect{行政區選擇}
-        DistrictSelect -->|確認| WeatherQuery[查詢天氣]
-        WeatherQuery --> WeatherDataProcess[資料處理]
-        WeatherDataProcess --> WeatherDisplay[天氣資訊顯示]
-    end
-    
-    subgraph 地震資訊流程
-        EarthquakeTab --> EarthquakeTypeSelect{地震類型選擇}
-        EarthquakeTypeSelect -->|選擇類型| EarthquakeQuery[查詢地震資訊]
-        EarthquakeQuery --> EarthquakeDataProcess[資料處理]
-        EarthquakeDataProcess --> EarthquakeDisplay[地震資訊顯示]
-    end
-    
-    subgraph 外觀控制
-        MainWindow --> AppearanceMode[外觀模式切換]
-    end
-    
-    WeatherDisplay --> MainWindow
-    EarthquakeDisplay --> MainWindow
-    AppearanceMode --> MainWindow
- ```
+---
